@@ -59,3 +59,22 @@ repRandom :: [Gen a] -> Gen [a]
 repRandom [] = \s -> ([], s)
 repRandom (x:xs) = generalB (:) x $ repRandom xs
    
+
+intToGenChar :: Integer -> Gen Char
+intToGenChar i  = (\s -> (toLetter i, s))
+
+foo :: Gen Integer -> (Integer -> Gen Char) -> Gen Char
+foo gen_a f s   = gen_b s'
+   where
+       (i, s') = gen_a s
+       gen_b = f i
+
+genTwo :: Gen a -> (a -> Gen b) -> Gen b
+genTwo gen_a aToGen_b seed = gen_b seed'
+    where
+        (a, seed')  = gen_a seed
+        gen_b = aToGen_b a
+
+mkGen :: a -> Gen a
+mkGen a  = (\s -> (a, s))
+
