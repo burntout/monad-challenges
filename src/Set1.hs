@@ -1,3 +1,4 @@
+module Set1 where
 import MCPrelude
 
 type Gen a = Seed -> (a, Seed)
