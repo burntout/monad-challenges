@@ -80,11 +80,16 @@ genTwo gen_a aToGen_b seed = gen_b seed'
 mkGen :: a -> Gen a
 mkGen a  = (\s -> (a, s))
 
-randLetter'  = genTwo rand' (\a -> (\s -> (toLetter a, s)))
-randEven' = genTwo rand'  (\a -> (\s -> (2*a, s)))
-randOdd' = genTwo randEven'  (\a -> (\s -> (a+1, s)))
+-- randLetter'  = genTwo rand' (\a -> (\s -> (toLetter a, s)))
+-- randEven' = genTwo rand'  (\a -> (\s -> (2*a, s)))
+-- randOdd' = genTwo randEven'  (\a -> (\s -> (a+1, s)))
 
-generalA' f gen_a = genTwo gen_a (\a -> (\s -> (f a, s)))
+randLetter'  = genTwo rand' (\a -> mkGen $ toLetter a )
+randEven' = genTwo rand'  (\a -> mkGen (2*a))
+randOdd' = genTwo randEven'  (\a -> mkGen (a+1))
+
+-- generalA' f gen_a = genTwo gen_a (\a -> (\s -> (f a, s)))
+generalA' f gen_a = genTwo gen_a (\a -> mkGen $ f a)
 randLetter''  = generalA' toLetter rand'
 randEven'' = generalA' (*2)  rand' 
 randOdd'' = generalA' (+1) randEven'
