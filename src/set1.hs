@@ -15,6 +15,7 @@ fiveRands = take 5 $ map fst $ iterate ( rand' . snd ) $ rand' $ mkSeed 1
 randLetter :: Gen Char
 -- randLetter s = (toLetter $ fst $ rand' s, snd $ rand' s)
 randLetter = generalA toLetter rand'
+
 -- 
 randString3 :: String
 -- randString3 = map (toLetter . fst ) $ take 3 $ iterate ( rand . snd ) $ rand $ mkSeed 1
@@ -59,15 +60,16 @@ repRandom :: [Gen a] -> Gen [a]
 repRandom [] = \s -> ([], s)
 repRandom (x:xs) = generalB (:) x $ repRandom xs
    
-
-intToGenChar :: Integer -> Gen Char
-intToGenChar i  = (\s -> (toLetter i, s))
-
-foo :: Gen Integer -> (Integer -> Gen Char) -> Gen Char
-foo gen_a f s   = gen_b s'
-   where
-       (i, s') = gen_a s
-       gen_b = f i
+-- Things that helped understand genTwo below
+--
+-- intToGenChar :: Integer -> Gen Char
+-- intToGenChar i  = (\s -> (toLetter i, s))
+-- 
+-- foo :: Gen Integer -> (Integer -> Gen Char) -> Gen Char
+-- foo gen_a f s   = gen_b s'
+--    where
+--        (i, s') = gen_a s
+--        gen_b = f i
 
 genTwo :: Gen a -> (a -> Gen b) -> Gen b
 genTwo gen_a aToGen_b seed = gen_b seed'
@@ -77,4 +79,13 @@ genTwo gen_a aToGen_b seed = gen_b seed'
 
 mkGen :: a -> Gen a
 mkGen a  = (\s -> (a, s))
+
+randLetter'  = genTwo rand' (\a -> (\s -> (toLetter a, s)))
+randEven' = genTwo rand'  (\a -> (\s -> (2*a, s)))
+randOdd' = genTwo randEven'  (\a -> (\s -> (a+1, s)))
+
+generalA' f gen_a = genTwo gen_a (\a -> (\s -> (f a, s)))
+randLetter''  = generalA' toLetter rand'
+randEven'' = generalA' (*2)  rand' 
+randOdd'' = generalA' (+1) randEven'
 
