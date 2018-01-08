@@ -15,7 +15,6 @@ headMay :: [a] -> Maybe a
 headMay [] = Nothing
 headMay (a:as) = Just a
 
-
 tailMay :: [a] -> Maybe [a]
 tailMay [] = Nothing
 tailMay (a:as) = Just as
@@ -30,7 +29,6 @@ divMay :: (Eq a, Fractional a) => a -> a -> Maybe a
 divMay x y 
     | y == 0 = Nothing
     | otherwise = Just (x/y)
-
 
 maximumMay :: Ord a => [a] -> Maybe a
 maximumMay [] = Nothing
@@ -59,7 +57,6 @@ queryGreek gd key = maybeDivOf (maybeMaxOf $ maybeTailOf xs) (maybeHeadOf xs)
                   case maybeDen of Nothing -> Nothing
                                    Just aDen -> divMay (fromIntegral aNum)  (fromIntegral aDen)
 
-              
 chain :: (a -> Maybe b) -> Maybe a -> Maybe b
 chain f Nothing = Nothing
 chain f (Just y) = f y
@@ -68,6 +65,12 @@ link :: Maybe a -> (a -> Maybe b) -> Maybe b
 link Nothing f = Nothing
 link (Just y) f = f y
             
-
+queryGreek2 :: GreekData -> String -> Maybe Double
 queryGreek2 gd key =  link (link (link xs tailMay) maximumMay) (\m -> (link (link xs headMay) (\h -> divMay (fromIntegral m) (fromIntegral h))))
         where xs = lookupMay key gd
+
+addSalaries :: [(String, Integer)] -> String -> String -> Maybe Integer
+addSalaries salaryData p1 p2 = link s1 (\x -> (link s2 (\y -> Just (x + y))))
+    where
+        s1 = lookupMay p1 salaryData
+        s2 = lookupMay p2 salaryData
