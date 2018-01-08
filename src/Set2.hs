@@ -6,7 +6,10 @@ data Maybe a  = Nothing | Just a
 instance Show a => Show (Maybe a) where 
     show (Just a) = "Just " ++ (show a)
     show Nothing = "Nothing"
-
+    
+instance Eq a => Eq (Maybe a) where
+    (==) Nothing Nothing = True
+    (==) (Just a) (Just b) = (==) a b
 
 headMay :: [a] -> Maybe a
 headMay [] = Nothing
