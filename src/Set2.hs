@@ -68,6 +68,7 @@ link :: Maybe a -> (a -> Maybe b) -> Maybe b
 link Nothing f = Nothing
 link (Just y) f = f y
             
+queryGreek2 :: GreekData -> String -> Maybe Double
 queryGreek2 gd key =  link (link (link xs tailMay) maximumMay) (\m -> (link (link xs headMay) (\h -> divMay (fromIntegral m) (fromIntegral h))))
         where xs = lookupMay key gd
 
