@@ -3,8 +3,8 @@ import MCPrelude
 
 type Gen a = Seed -> (a, Seed)
 
-generalA :: (a -> b) -> Gen a -> Gen b
-generalA f prf s = (f $ fst $ prf s, snd $ prf s)
+-- generalA :: (a -> b) -> Gen a -> Gen b
+-- generalA f prf s = (f $ fst $ prf s, snd $ prf s)
 
 rand' :: Gen Integer
 rand' = rand
@@ -42,12 +42,12 @@ randPair :: Gen (Char, Integer)
 --         (int, s'') = rand' s'
 randPair = generalPair randLetter rand'
 
-generalPair :: Gen a -> Gen b -> Gen (a,b)
+-- generalPair :: Gen a -> Gen b -> Gen (a,b)
 -- generalPair x y s = ((a, b), s'')
 --     where
 --         (a, s') = x s 
 --         (b, s'') = y s'
-
+generalPair :: Gen a -> Gen b -> Gen (a,b)
 generalPair = generalB (,)
 
 generalB :: (a -> b -> c ) -> Gen a -> Gen b -> Gen c
@@ -56,22 +56,14 @@ generalB f x y s = (f a b, s'')
         (a, s') = x s
         (b, s'') = y s'
 
-repRandom :: [Gen a] -> Gen [a]
--- repRandom [] = \s -> ([],s)
-repRandom [] = \s -> ([], s)
-repRandom (x:xs) = generalB (:) x $ repRandom xs
-   
--- Things that helped understand genTwo below
---
--- intToGenChar :: Integer -> Gen Char
--- intToGenChar i  = (\s -> (toLetter i, s))
--- 
--- foo :: Gen Integer -> (Integer -> Gen Char) -> Gen Char
--- foo gen_a f s   = gen_b s'
---    where
---        (i, s') = gen_a s
---        gen_b = f i
+generalB2 :: (a -> b -> c ) -> Gen a -> Gen b -> Gen c
+generalB2 f ga gb = genTwo ga (\x -> (genTwo gb (\y -> mkGen (f x y))))
 
+repRandom :: [Gen a] -> Gen [a]
+repRandom [] = \s -> ([], s)
+-- repRandom (x:xs) = generalB (:) x $ repRandom xs
+repRandom (x:xs) = generalB2 (:) x $ repRandom xs
+   
 genTwo :: Gen a -> (a -> Gen b) -> Gen b
 genTwo gen_a aToGen_b seed = gen_b seed'
     where
@@ -89,9 +81,10 @@ randLetter'  = genTwo rand' (\a -> mkGen $ toLetter a )
 randEven' = genTwo rand'  (\a -> mkGen (2*a))
 randOdd' = genTwo randEven'  (\a -> mkGen (a+1))
 
--- generalA' f gen_a = genTwo gen_a (\a -> (\s -> (f a, s)))
-generalA' f gen_a = genTwo gen_a (\a -> mkGen $ f a)
-randLetter''  = generalA' toLetter rand'
-randEven'' = generalA' (*2)  rand' 
-randOdd'' = generalA' (+1) randEven'
+generalA :: (a -> b) -> Gen a -> Gen b
+generalA f ga = genTwo ga (\a -> mkGen $ f a)
+
+randLetter''  = generalA toLetter rand'
+randEven'' = generalA (*2)  rand' 
+randOdd'' = generalA (+1) randEven'
 
