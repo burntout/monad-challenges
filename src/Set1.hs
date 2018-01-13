@@ -3,88 +3,96 @@ import MCPrelude
 
 type Gen a = Seed -> (a, Seed)
 
--- generalA :: (a -> b) -> Gen a -> Gen b
--- generalA f prf s = (f $ fst $ prf s, snd $ prf s)
+-- fiveRands :: [Integer]
+-- fiveRands = [r,r',r'',r''',r'''']
+--     where 
+--         (r,s') = rand $ mkSeed 1 
+--         (r',s'') = rand s'
+--         (r'',s''') = rand s''
+--         (r''',s'''') = rand s'''
+--         (r'''',s''''') = rand s''''
+-- fiveRands = map fst $ take 5  $ iterate (\x -> (rand (snd x))) $ rand $ mkSeed 1 
+fiveRands = take 5 $ f $ mkSeed 1
+f seed = r : (f seed')
+    where (r, seed') = rand seed
 
-rand' :: Gen Integer
-rand' = rand
+randLetter :: Seed -> (Char, Seed)
+randLetter s = (l, s')
+    where 
+        (r,s') = rand s
+        l = toLetter r
 
-fiveRands :: [Integer]
--- fiveRands = map fst $ take 5 $ iterate ( rand . snd ) $ rand $ mkSeed 1
-fiveRands = take 5 $ map fst $ iterate ( rand' . snd ) $ rand' $ mkSeed 1
--- 
-randLetter :: Gen Char
--- randLetter s = (toLetter $ fst $ rand' s, snd $ rand' s)
-randLetter = generalA toLetter rand'
+randString3 = take 3 $ randLetters $ mkSeed 1 
+randLetters seed = l : (randLetters seed')
+    where (l, seed') = randLetter seed
 
--- 
-randString3 :: String
--- randString3 = map (toLetter . fst ) $ take 3 $ iterate ( rand . snd ) $ rand $ mkSeed 1
-randString3 = take 3 $ map fst $ iterate ( randLetter . snd ) $ randLetter $ mkSeed 1
+randEven :: Seed -> (Integer, Seed)
+randEven s = (l, s')
+    where 
+        (r,s') = rand s
+        l = r * 2
 
-randEven :: Gen Integer -- the output of rand * 2
--- randEven s = ((*2) $ fst $ rand' s, snd $ rand' s)
-randEven = generalA (*2) rand'
+randOdd :: Seed -> (Integer, Seed)
+randOdd s = (l, s')
+    where 
+        (r,s') = rand s
+        l = r * 2 +1
 
-randOdd :: Gen Integer -- the output of rand * 2 + 1
--- randOdd s = (((+1) . (*2)) $ fst $ rand' s, snd $ rand' s)
--- randOdd s = ((+1)  $ fst $ randEven s, snd $ randEven s)
-randOdd = generalA (+1) randEven
-
-randTen :: Gen Integer -- the output of rand * 10
--- randTen s = ((*10) $ fst $ rand' s, snd $ rand' s)
-randTen = generalA (*10) rand'
+randTen :: Seed -> (Integer, Seed)
+randTen s = (l, s')
+    where 
+        (r,s') = rand s
+        l = r * 10
 
 randPair :: Gen (Char, Integer)
--- randPair s = ((chr, int ),s'')
---     where 
---         (chr,s') = randLetter s 
---         (int, s'') = rand' s'
-randPair = generalPair randLetter rand'
+randPair s = ((a, b), s'')
+    where  
+        (a, s') = randLetter s
+        (b, s'') = rand s'
 
--- generalPair :: Gen a -> Gen b -> Gen (a,b)
--- generalPair x y s = ((a, b), s'')
---     where
---         (a, s') = x s 
---         (b, s'') = y s'
-generalPair :: Gen a -> Gen b -> Gen (a,b)
-generalPair = generalB (,)
+generalPair :: Gen a -> Gen b -> Gen (a, b)
+generalPair ga gb s = ((a, b), s'')
+    where  
+        (a, s') = ga s
+        (b, s'') = gb s'
 
-generalB :: (a -> b -> c ) -> Gen a -> Gen b -> Gen c
-generalB f x y s = (f a b, s'')
+generalB :: (a -> b -> c) ->  Gen a -> Gen b -> Gen c
+generalB f ga gb s = (f a b, s'')
+    where  
+        (a, s') = ga s
+        (b, s'') = gb s'
+
+generalPair2 = generalB (,)
+
+generalCons :: Gen a -> Gen [a] -> Gen [a]
+generalCons ga gla s = (a:as, s'')
+    where
+        (a, s') = ga s
+        (as, s'') = gla s'
+
+
+notrepRandom :: [Gen a] -> Seed -> [a]
+notrepRandom [] seed  = []
+notrepRandom (g:gs) seed = r : (notrepRandom gs seed')
+        where (r, seed') = g seed
+
+generalA :: (a -> b) -> Gen a -> Gen b
+generalA f ga s = (f r, s')
     where 
-        (a, s') = x s
-        (b, s'') = y s'
+        (r,s') = ga s
 
-generalB2 :: (a -> b -> c ) -> Gen a -> Gen b -> Gen c
-generalB2 f ga gb = genTwo ga (\x -> (genTwo gb (\y -> mkGen (f x y))))
+genTwo :: Gen a -> (a -> Gen b) -> Gen b
+genTwo ga f s = (f a) s'
+    where 
+        (a, s') = ga s
+
+mkGen :: a -> Gen a
+mkGen a = (\s -> (a ,s))
 
 repRandom :: [Gen a] -> Gen [a]
 repRandom [] = \s -> ([], s)
--- repRandom (x:xs) = generalB (:) x $ repRandom xs
-repRandom (x:xs) = generalB2 (:) x $ repRandom xs
-   
-genTwo :: Gen a -> (a -> Gen b) -> Gen b
-genTwo gen_a aToGen_b seed = gen_b seed'
-    where
-        (a, seed')  = gen_a seed
-        gen_b = aToGen_b a
+--repRandom (g:gs) = generalCons g $ repRandom gs
+repRandom (g:gs) = generalB (:) g $ repRandom gs
 
-mkGen :: a -> Gen a
-mkGen a  = (\s -> (a, s))
-
--- randLetter'  = genTwo rand' (\a -> (\s -> (toLetter a, s)))
--- randEven' = genTwo rand'  (\a -> (\s -> (2*a, s)))
--- randOdd' = genTwo randEven'  (\a -> (\s -> (a+1, s)))
-
-randLetter'  = genTwo rand' (\a -> mkGen $ toLetter a )
-randEven' = genTwo rand'  (\a -> mkGen (2*a))
-randOdd' = genTwo randEven'  (\a -> mkGen (a+1))
-
-generalA :: (a -> b) -> Gen a -> Gen b
-generalA f ga = genTwo ga (\a -> mkGen $ f a)
-
-randLetter''  = generalA toLetter rand'
-randEven'' = generalA (*2)  rand' 
-randOdd'' = generalA (+1) randEven'
-
+generalB2 :: (a -> b -> c ) -> Gen a -> Gen b -> Gen c
+generalB2 f ga gb = genTwo ga (\x -> (genTwo gb (\y -> mkGen (f x y))))
