@@ -96,3 +96,10 @@ repRandom (g:gs) = generalB (:) g $ repRandom gs
 
 generalB2 :: (a -> b -> c ) -> Gen a -> Gen b -> Gen c
 generalB2 f ga gb = genTwo ga (\x -> (genTwo gb (\y -> mkGen (f x y))))
+
+-- WRONG WRONG WRONG
+--
+-- repRandom2 :: [Gen a] -> Gen [a]
+-- repRandom2 gs s = mkGen (map fst l) (snd $ last l)
+--     where
+--         l = zipWith ($) gs (s : (map snd l))
