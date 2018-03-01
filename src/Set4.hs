@@ -26,6 +26,10 @@ link :: Maybe a -> (a -> Maybe b) -> Maybe b
 generalB :: (a -> b -> c ) -> Gen a -> Gen b -> Gen c
 yLink :: (a -> b -> c) -> Maybe a -> Maybe b -> Maybe c
 
+class Monad m where
+    bind :: m a -> (a -> m b) -> m b
+    return :: a -> m a 
 
-mLink :: m a -> (a -> m b) -> m b
-mYLink :: (a -> b -> c) -> m a -> m b -> m c
+ylink f a b = bind a (\x -> (bind b (\y -> return (f x y))))
+
+--mYLink :: (a -> b -> c) -> m a -> m b -> m c

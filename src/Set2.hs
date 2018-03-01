@@ -1,5 +1,5 @@
 module Set2 where
-import Set1
+-- import Set1
 import MCPrelude
 
 data Maybe a  = Nothing | Just a

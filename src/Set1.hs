@@ -94,7 +94,7 @@ repRandom [] = \s -> ([], s)
 -- repRandom (g:gs) = generalCons g $ repRandom gs
 -- repRandom (g:gs) = generalB (:) g $ repRandom gs
 -- repRandom (g:gs) = genTwo g (\x -> (genTwo (repRandom gs) (\y -> mkGen ( x:y))))
-repRandom (x:xs) = genTwo x (\a -> generalA (a:)) (repRandom xs)
+repRandom (x:xs) = genTwo x (\a -> generalA (a:) (repRandom xs))
 
 generalB2 :: (a -> b -> c ) -> Gen a -> Gen b -> Gen c
 generalB2 f ga gb = genTwo ga (\x -> (genTwo gb (\y -> mkGen (f x y))))
