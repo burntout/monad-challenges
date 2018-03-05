@@ -59,18 +59,30 @@ generalPair ga gb =
         do {b <- gb ;
             return (a, b) }}
 
+liftM2 f ma mb = 
+   do { a <- ma;
+       do { b <- mb;
+           return (f a b) }}
+
 greekDiv ma mb = 
     do { a <- ma ; 
         do { b <- mb ;
             divMay (fromIntegral a) (fromIntegral b) }}
 
 queryGreek :: GreekData -> String -> Maybe Double
-queryGreek gd key = greekDiv num denom
-    where 
-    xs = lookupMay key gd
-    num = xs >>= tailMay >>= maximumMay
-    denom = xs >>= headMay
+--queryGreek gd key = greekDiv num denom
+--    where 
+--    xs = lookupMay key gd
+--    num = xs >>= tailMay >>= maximumMay
+--    denom = xs >>= headMay
 
+queryGreek gd key = 
+    do { xs <- lookupMay key gd ;
+        do { tail <- tailMay xs ;
+            do { num <- maximumMay tail ;
+                do { denom <- headMay xs ;
+                    divMay (fromIntegral num) (fromIntegral denom) }}}}
+    
 addSalaries :: [(String, Integer)] -> String -> String -> Maybe Integer
 addSalaries salaryData p1 p2 =
     do { s1 <- lookupMay p1 salaryData;
@@ -92,3 +104,34 @@ tailMax ml = do
     l <- tailMay ml
     maximumMay l
     
+instance Monad [] where 
+    (>>=)  [] _ = []
+    (>>=) (a:as) f = f a ++ ((>>=) as f)
+    return a = [a]
+
+data Card = Card Int [Char]
+instance Show Card where
+        show (Card x b) = (show x) ++ b 
+
+
+allPairs :: [a] -> [b] -> [(a,b)]
+allCards :: [Int] -> [String] -> [Card]
+--allCombs3 :: (a -> b -> c -> d) -> [a] -> [b] -> [c] -> [d]
+
+allPairs as bs = 
+    do { a <- as ;
+        do { b <- bs ;
+            return (a, b) }}
+
+allCards il sl =
+    do { i <- il ;
+        do {s <- sl ;
+            return $ Card i s }}
+
+
+allCombs f as bs cs
+    do { a <- as ;
+        do { b <- bs ;
+            do { c <- cs ;
+                return $ f a b c }}}         
+            return (a, b) }}
